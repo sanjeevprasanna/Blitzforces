@@ -9,7 +9,7 @@ const API = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 // ── Shared input style ────────────────────────────────────────────────────────
 const inputCls =
   "w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl " +
-  "text-white text-[14px] placeholder-white/25 font-mono " +
+  "text-white text-[14px]  placeholder-white/25 font-mono " +
   "focus:outline-none focus:border-cyan/60 focus:bg-white/8 transition-all";
 
 const labelCls =
