@@ -89,13 +89,13 @@ export default function BattleCards() {
   }
 
   return (
-    <section className="px-10 py-9 border-b border-border">
-      <h2 className="text-[18px] font-bold tracking-tight text-white mb-5">
+    <section className="px-10 py-9 border-b border-border animate-fade-in">
+      <h2 className="text-[18px] font-bold tracking-tight text-white mb-5 animate-fade-in-up">
         Start a battle
       </h2>
 
       <div className="grid grid-cols-2 gap-4">
-        {CARDS.map((card) => (
+        {CARDS.map((card, index) => (
           <button
             key={card.id}
             onClick={() =>
@@ -103,11 +103,11 @@ export default function BattleCards() {
               setSelected((prev) => (prev === card.id ? null : card.id))
             }
             disabled={card.id === "bet"}
-            className={`relative flex items-center gap-4 p-5 rounded-[14px] border text-left overflow-hidden transition-all duration-150 group disabled:opacity-40 disabled:cursor-not-allowed ${selected === card.id
+            className={`relative flex items-center gap-4 p-5 rounded-[14px] border text-left overflow-hidden transition-all duration-300 group disabled:opacity-40 disabled:cursor-not-allowed animate-fade-in-up ${["delay-100", "delay-200"][index] ?? "delay-100"} ${selected === card.id
                 ? "border-accent bg-accent/10"
                 : card.featured
-                  ? "border-accent-dim bg-card hover:bg-elevated hover:-translate-y-0.5"
-                  : "border-border bg-card hover:bg-elevated hover:border-border-bright hover:-translate-y-0.5"
+                  ? "border-accent-dim bg-card hover:bg-elevated hover:-translate-y-1"
+                  : "border-border bg-card hover:bg-elevated hover:border-border-bright hover:-translate-y-1"
               }`}
           >
             {card.featured && (

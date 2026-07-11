@@ -59,13 +59,13 @@ export default function RankingsPage() {
             <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
             <div className="absolute -right-20 -top-20 w-[400px] h-[400px] bg-gradient-to-br from-accent to-accent-dim opacity-[0.06] rounded-full pointer-events-none" />
             
-            <div className="relative z-10 max-w-[1400px] mx-auto px-8 py-12">
+            <div className="relative z-10 max-w-[1400px] mx-auto px-8 py-12 animate-fade-in">
               <div className="flex items-end justify-between">
-                <div>
-                  <h1 className="text-[36px] font-extrabold tracking-tight mb-2">
+                <div className="animate-fade-in-up">
+                  <h1 className="text-[36px] font-extrabold tracking-tight mb-2 animate-fade-in-up delay-100">
                     Global Rankings
                   </h1>
-                  <p className="text-[14px] text-white/40 font-mono">
+                  <p className="text-[14px] text-white/40 font-mono animate-fade-in-up delay-200">
                     Compete globally · Sorted by Blitzforce Points
                   </p>
                 </div>
@@ -89,7 +89,7 @@ export default function RankingsPage() {
           <div className="max-w-[1400px] mx-auto px-8 py-8">
             {/* Top Gainers Section */}
             {!gainersLoading && gainers.length > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+              <div className="bg-card border border-border rounded-2xl p-6 mb-6 animate-fade-in-up">
                 <div className="flex items-center gap-2 mb-4">
                   <svg
                     width="18"
@@ -107,14 +107,14 @@ export default function RankingsPage() {
                     Top Gainers (Last 7 Days)
                   </h3>
                 </div>
-                
+
                 <div className="grid grid-cols-5 gap-3">
-                  {gainers.map((gainer) => {
+                  {gainers.map((gainer, index) => {
                     const color = getRatingColor(gainer.rating);
                     return (
                       <div
                         key={gainer.handle}
-                        className="bg-elevated border border-border rounded-xl p-4 hover:border-border-bright transition-colors"
+                        className={`bg-elevated border border-border rounded-xl p-4 hover:border-border-bright transition-all duration-300 animate-fade-in-up ${["delay-100", "delay-200", "delay-300", "delay-400", ""][index] ?? ""}`}
                       >
                         <div className="flex items-center gap-2.5 mb-3">
                           <div
@@ -148,7 +148,7 @@ export default function RankingsPage() {
             )}
 
             {/* Main Rankings Table */}
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden animate-fade-in-up delay-100">
               {/* Header with filters */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                 <h3 className="text-[15px] font-bold text-white">

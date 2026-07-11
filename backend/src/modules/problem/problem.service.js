@@ -14,22 +14,25 @@ async function getSolvedUnion(userId1, userId2) {
 }
 
 async function selectProblem(player1Id, player2Id, avgRating) {
-  const minRating = avgRating - 100;
-  const maxRating = avgRating + 100;
+  let minRating = Math.max(avgRating - 100, 600);  // Ensure minimum 600
+  let maxRating = avgRating + 100;
 
   const solvedIds = await getSolvedUnion(player1Id, player2Id);
-  const problem = await getEligibleProblem(minRating, maxRating, solvedIds);
+  let problem = await getEligibleProblem(minRating, maxRating, solvedIds);
 
   if (!problem) {
     // Widen range if nothing found
-    const fallback = await getEligibleProblem(
-      avgRating - 200,
-      avgRating + 200,
-      solvedIds,
-    );
-    return fallback ?? null;
+    minRating = Math.max(avgRating - 200, 600);
+    maxRating = avgRating + 200;
+    problem = await getEligibleProblem(minRating, maxRating, solvedIds);
   }
-  return problem;
+
+  if (!problem) {
+    // Really wide range as last resort
+    problem = await getEligibleProblem(600, 2500, solvedIds);
+  }
+
+  return problem ?? null;
 }
 
 module.exports = { selectProblem };

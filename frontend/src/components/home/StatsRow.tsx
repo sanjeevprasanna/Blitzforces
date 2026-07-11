@@ -96,13 +96,13 @@ export default function StatsRow({ profile }: StatsRowProps) {
   ];
 
   return (
-    <section className="border-b border-border bg-surface">
+    <section className="border-b border-border bg-surface animate-fade-in">
       <div className="max-w-[1200px] mx-auto px-10 py-6">
         <div className="grid grid-cols-4 gap-4">
-          {stats.map((stat) => (
+          {stats.map((stat, index) => (
             <div
               key={stat.label}
-              className="relative flex flex-col gap-3 px-6 py-5 rounded-2xl bg-card border border-border hover:border-border-bright transition-colors overflow-hidden group"
+              className={`relative flex flex-col gap-3 px-6 py-5 rounded-2xl bg-card border border-border hover:border-border-bright transition-all duration-300 overflow-hidden group animate-fade-in-up ${["delay-100", "delay-200", "delay-300", "delay-400"][index] ?? ""}`}
             >
               <div
                 className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl opacity-60 group-hover:opacity-100 transition-opacity"

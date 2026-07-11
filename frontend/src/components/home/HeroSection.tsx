@@ -16,24 +16,24 @@ export default function HeroSection({ profile }: HeroSectionProps) {
         }}
       />
 
-      <div className="relative z-10 max-w-[460px]">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-elevated border border-border rounded-full text-[12px] text-white/50 font-mono mb-5">
+      <div className="relative z-10 max-w-[460px] animate-fade-in-up">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-elevated border border-border rounded-full text-[12px] text-white/50 font-mono mb-5 animate-fade-in delay-100">
           <span className="w-2 h-2 rounded-full bg-success animate-pulse2" />
           Live duels in progress
         </div>
-        <h1 className="text-[40px] font-extrabold leading-[1.1] tracking-[-1.5px] text-white mb-4">
+        <h1 className="text-[40px] font-extrabold leading-[1.1] tracking-[-1.5px] text-white mb-4 animate-fade-in-up delay-200">
           Prove you're the
           <br />
           <span className="text-accent">fastest coder</span>
         </h1>
-        <p className="text-[15px] text-white/50 leading-relaxed max-w-[380px]">
+        <p className="text-[15px] text-white/50 leading-relaxed max-w-[380px] animate-fade-in-up delay-300">
           1v1 competitive programming duels. Solve the same problem, first AC
           wins. Your rating is on the line.
         </p>
       </div>
 
       {/* VS bracket card with real data */}
-      <div className="relative z-10 flex-shrink-0 bg-card border border-border-bright rounded-2xl p-6 min-w-[220px] flex flex-col gap-4">
+      <div className="relative z-10 flex-shrink-0 bg-card border border-border-bright rounded-2xl p-6 min-w-[220px] flex flex-col gap-4 animate-scale-in delay-400">
         <div className="flex items-center justify-between gap-4">
           <span className="text-[14px] font-bold text-white">
             {profile?.cfHandle ?? "—"}

@@ -104,10 +104,10 @@ export default function Sidebar() {
 
             {!loading &&
               !error &&
-              leaderboard.map((entry) => (
+              leaderboard.map((entry, index) => (
                 <div
                   key={entry.rank}
-                  className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-colors ${entry.isMe
+                  className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-all duration-300 animate-fade-in ${["delay-100", "delay-200", "delay-300", "delay-400", ""][index % 5] ?? ""} ${entry.isMe
                       ? "bg-accent/10 border border-accent/20"
                       : "hover:bg-elevated"
                     }`}

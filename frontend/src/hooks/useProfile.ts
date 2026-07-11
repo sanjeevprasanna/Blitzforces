@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
 export interface ProfileData {
+  id: number;
   handle: string;
   email: string;
   cfHandle: string;
@@ -28,7 +29,7 @@ export interface ProfileData {
   gameHistory: any[];
 }
 
-export function useProfile() {
+export function useProfile(handle?: string) {
   const { token } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,18 +38,25 @@ export function useProfile() {
   useEffect(() => {
     if (!token) return;
     const API = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+    const url = handle
+      ? `${API}/user/profile/${encodeURIComponent(handle)}`
+      : `${API}/user/profile`;
 
-    fetch(`${API}/user/profile`, {
+    setLoading(true);
+    setError(null);
+    setProfile(null);
+
+    fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {
-        if (!r.ok) throw new Error("Failed to load profile");
+        if (!r.ok) throw new Error("Profile not found");
         return r.json();
       })
       .then(setProfile)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, handle]);
 
   return { profile, loading, error };
 }

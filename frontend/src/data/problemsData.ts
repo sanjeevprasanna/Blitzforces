@@ -47,7 +47,7 @@ export const problemsData: ProblemAttempt[] = [
     gameOpponent: "petr_fan",
     firstAttempt: "2024-05-25",
     lastAttempt: "2024-05-25",
-    verdictBreakdown: { WA: 2, TLE: 1, WA: 1, AC: 1 },
+    verdictBreakdown: { WA: 3, TLE: 1, AC: 1 },
     cfUrl: "https://codeforces.com/problemset/problem/1923/E",
   },
   {

@@ -304,7 +304,7 @@ function NotifCard({ notif, onRead, onDismiss }: NotifCardProps) {
 
   return (
     <div
-      className={`relative flex items-start gap-4 px-5 py-4 border-b border-border/50 last:border-b-0 transition-colors group ${
+      className={`relative flex items-start gap-4 px-5 py-4 border-b border-border/50 last:border-b-0 transition-all duration-300 group animate-fade-in ${
         notif.read
           ? "hover:bg-elevated/50"
           : "bg-accent/[0.03] hover:bg-accent/[0.06]"
@@ -533,14 +533,14 @@ export default function NotificationsPage() {
       <Navbar />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-[780px] mx-auto px-6 py-8">
+        <div className="max-w-[780px] mx-auto px-6 py-8 animate-fade-in">
           {/* Page header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 animate-fade-in-up">
             <div>
-              <h1 className="text-[28px] font-extrabold tracking-tight text-white">
+              <h1 className="text-[28px] font-extrabold tracking-tight text-white animate-fade-in-up delay-100">
                 Notifications
               </h1>
-              <p className="text-[14px] text-white/40 mt-1 font-mono">
+              <p className="text-[14px] text-white/40 mt-1 font-mono animate-fade-in-up delay-200">
                 {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
               </p>
             </div>

@@ -45,6 +45,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/profile/:handle"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/friends"
         element={
           <ProtectedRoute>

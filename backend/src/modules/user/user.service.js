@@ -60,7 +60,7 @@ async function getProfile(userId) {
     date: new Date(g.date).toISOString().slice(0, 10),
     opponent: g.opponent,
     opponentRating: g.opponent_rating,
-    opponentInitials: getInitials(g.opponent),
+    opponentInitials: getInitials(g.opponent || "Bot"),
     result: g.winner_id === userId ? "won" : "lost",
     problemId: g.problem_id,
     problemName: g.problem_name,
@@ -79,6 +79,7 @@ async function getProfile(userId) {
   const betsWon = parseInt(stats.bets_won, 10);
 
   return {
+    id: user.id,
     // Hero
     handle: user.cf_handle,
     email: user.email,
@@ -109,4 +110,14 @@ async function getProfile(userId) {
   };
 }
 
-module.exports = { getProfile };
+async function getProfileByHandle(handle) {
+  const user = await repo.getUserByHandle(handle);
+  if (!user) throw new Error("User not found");
+  return getProfile(user.id);
+}
+
+async function searchUsers(query, excludeUserId) {
+  return repo.searchByHandle(query, excludeUserId);
+}
+
+module.exports = { getProfile, getProfileByHandle, searchUsers };

@@ -207,7 +207,7 @@
 @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes spinReverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 @keyframes fightIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-@keyframes shimmer { 0% { backgroundPosition: -200% 0; } 100% { backgroundPosition: 200% 0; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes timerBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes subIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
 @keyframes subInR { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }

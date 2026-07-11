@@ -29,11 +29,12 @@ export interface DuelStatus {
     penaltyMinutes: number;
   }[];
   winner: number | null;
+  winnerHandle: string | null;
   endsAt: string;
 }
 
 export function useDuel() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [mmStatus, setMmStatus] = useState<MatchmakingStatus>("idle");
   const [duelId, setDuelId] = useState<number | null>(null);
   const [duel, setDuel] = useState<DuelStatus | null>(null);
@@ -167,13 +168,6 @@ export function useDuel() {
     },
     [],
   );
-
-  const didIWin =
-    duel?.winner !== null && user
-      ? duel?.players.me.handle === user.cfHandle && duel?.status === "finished"
-        ? duel.winner !== null
-        : false
-      : false;
 
   return {
     mmStatus,

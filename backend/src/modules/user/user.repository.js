@@ -107,8 +107,8 @@ async function getGameHistory(userId) {
        d.mode                                               AS game_type,
        d.bet_amount,
        d.winner_id,
-       opp.cf_handle                                        AS opponent,
-       opp.cf_rating                                        AS opponent_rating,
+       COALESCE(opp.cf_handle, 'Bot')                       AS opponent,
+       COALESCE(opp.cf_rating, 0)                           AS opponent_rating,
        p.cf_contest_id || p.cf_index                        AS problem_id,
        p.title                                              AS problem_name,
        p.rating                                             AS problem_rating,
@@ -118,9 +118,9 @@ async function getGameHistory(userId) {
          WHERE s.duel_id = d.id AND s.user_id = $1 AND s.verdict = 'AC'
        ) - d.started_at) / 60.0                            AS solve_minutes
      FROM duels d
-     JOIN users opp ON opp.id = CASE
-                         WHEN d.player1_id = $1 THEN d.player2_id
-                         ELSE d.player1_id END
+     LEFT JOIN users opp ON opp.id = CASE
+                              WHEN d.player1_id = $1 THEN d.player2_id
+                              ELSE d.player1_id END
      JOIN problems p        ON p.id  = d.problem_id
      LEFT JOIN points_history ph ON ph.duel_id = d.id AND ph.user_id = $1
      WHERE (d.player1_id = $1 OR d.player2_id = $1)
@@ -151,8 +151,29 @@ async function getCurrentStreak(userId) {
   return streak;
 }
 
+async function getUserByHandle(handle) {
+  const { rows } = await pool.query(
+    `SELECT id, cf_handle, email, cf_rating, cf_tier, blitzforce_points, created_at
+     FROM users WHERE LOWER(cf_handle) = LOWER($1)`,
+    [handle]
+  );
+  return rows[0] ?? null;
+}
+
+async function searchByHandle(query, excludeUserId) {
+  const { rows } = await pool.query(
+    `SELECT id, cf_handle, cf_rating, blitzforce_points
+     FROM users
+     WHERE cf_handle ILIKE $1 AND id != $2
+     LIMIT 20`,
+    [`%${query}%`, excludeUserId]
+  );
+  return rows;
+}
+
 module.exports = {
   getUserById,
+  getUserByHandle,
   getSolvedCount,
   getPointsHistory,
   getDuelActivity,
@@ -160,4 +181,5 @@ module.exports = {
   getBestWins,
   getGameHistory,
   getCurrentStreak,
+  searchByHandle,
 };

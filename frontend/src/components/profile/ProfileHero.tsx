@@ -1,5 +1,5 @@
 import type { ProfileStats } from "../../types";
-import { getRatingColor, getRatingTitle } from "../../utils/rating";
+import { getRatingColor } from "../../utils/rating";
 
 interface ProfileHeroProps {
   profile: ProfileStats;

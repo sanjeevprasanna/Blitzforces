@@ -169,8 +169,6 @@ export default function RatingGraph({ history }: RatingGraphProps) {
 
           {/* Tooltip — rendered in HTML for easy sizing */}
           {tooltip && (() => {
-            const svgEl   = svgRef.current;
-            const rect    = svgEl?.getBoundingClientRect();
             const pctX    = tooltip.x / W;
             const pctY    = tooltip.y / H;
             const isRight = pctX > 0.65;

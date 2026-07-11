@@ -30,9 +30,9 @@ export default function RecentBattles({ profile }: RecentBattlesProps) {
   const battles = profile?.gameHistory?.slice(0, 5) ?? [];
 
   return (
-    <section className="px-10 py-8">
+    <section className="px-10 py-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[18px] font-bold tracking-tight text-white">
+        <h2 className="text-[18px] font-bold tracking-tight text-white animate-fade-in-up">
           Recent battles
         </h2>
         <button
@@ -57,7 +57,7 @@ export default function RecentBattles({ profile }: RecentBattlesProps) {
             return (
               <div
                 key={battle.id ?? i}
-                className="flex items-center gap-4 px-4 py-3.5 bg-card border border-border rounded-xl hover:border-border-bright hover:bg-elevated transition-colors"
+                className={`flex items-center gap-4 px-4 py-3.5 bg-card border border-border rounded-xl hover:border-border-bright hover:bg-elevated transition-all duration-300 animate-fade-in-up ${["delay-100", "delay-200", "delay-300", "delay-400", ""][i] ?? ""}`}
               >
                 <div
                   className="flex items-center gap-1.5 text-[13px] font-bold font-mono w-8 flex-shrink-0"

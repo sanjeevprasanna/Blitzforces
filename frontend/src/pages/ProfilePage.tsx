@@ -1,114 +1,3 @@
-// import Navbar from "../components/layout/Navbar";
-// import ProfileHero from "../components/profile/ProfileHero";
-// import RatingGraph from "../components/profile/RatingGraph";
-// import ActivityGrid from "../components/profile/ActivityGrid";
-// import StatCards from "../components/profile/StatCards";
-// import GameHistoryTable from "../components/profile/GameHistoryTable";
-// import { useEffect } from "react";
-// import { useLocation } from "react-router-dom";
-// import { useProfile } from "../hooks/useProfile";
-// import type { ProfileStats } from "../types";
-//
-// // Fill today's date gaps in activity grid so the heatmap always covers 1 year
-// function fillActivityGrid(raw: { date: string; count: number }[]) {
-//   const map = new Map(raw.map((d) => [d.date, d.count]));
-//   const days: { date: string; count: number }[] = [];
-//   const end = new Date();
-//   const start = new Date(end);
-//   start.setFullYear(start.getFullYear() - 1);
-//   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-//     const key = d.toISOString().slice(0, 10);
-//     days.push({ date: key, count: map.get(key) ?? 0 });
-//   }
-//   return days;
-// }
-//
-// export default function ProfilePage() {
-//   const location = useLocation();
-//   const { profile, loading, error } = useProfile();
-//
-//   useEffect(() => {
-//     if (location.state?.scrollToBottom) {
-//       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-//     }
-//   }, [location]);
-//
-//   if (loading) {
-//     return (
-//       <div className="flex flex-col min-h-screen bg-base font-syne">
-//         <Navbar />
-//         <div className="flex-1 flex items-center justify-center">
-//           <p className="text-white/30 text-[14px] font-mono animate-pulse">
-//             Loading profile...
-//           </p>
-//         </div>
-//       </div>
-//     );
-//   }
-//
-//   if (error || !profile) {
-//     return (
-//       <div className="flex flex-col min-h-screen bg-base font-syne">
-//         <Navbar />
-//         <div className="flex-1 flex items-center justify-center">
-//           <p className="text-danger text-[14px] font-mono">
-//             {error ?? "Profile not found"}
-//           </p>
-//         </div>
-//       </div>
-//     );
-//   }
-//
-//   // Map backend profile → ProfileStats shape your components expect
-//   const profileStats: ProfileStats = {
-//     handle: profile.handle,
-//     displayName: profile.handle, // no displayName yet, use handle
-//     email: profile.email,
-//     country: "",
-//     countryFlag: "",
-//     joinedDate: profile.joinedDate,
-//     cfHandle: profile.cfHandle,
-//     rating: profile.blitzforcePoints, // Blitzforce points as "rating"
-//     maxRating: profile.blitzforcePoints, // will track properly later
-//     rank: profile.cfTier,
-//     gamesPlayed: profile.gamesPlayed,
-//     gamesWon: profile.gamesWon,
-//     gamesLost: profile.gamesLost,
-//     winStreak: profile.winStreak,
-//     maxWinStreak: profile.winStreak, // will track properly later
-//     bestTime: "—", // derive from gameHistory later
-//     bestRank: 1,
-//     totalBets: profile.totalBets,
-//     betsWon: profile.betsWon,
-//     betsLost: profile.betsLost,
-//     ratingHistory: profile.ratingHistory,
-//     activityGrid: fillActivityGrid(profile.activityGrid),
-//     bestWins: profile.bestWins,
-//   };
-//
-//   return (
-//     <div className="flex flex-col min-h-screen bg-base font-syne">
-//       <Navbar />
-//       <main className="flex-1 overflow-y-auto">
-//         <ProfileHero profile={profileStats} />
-//         <div className="max-w-[1200px] mx-auto px-6 py-8 flex flex-col gap-6">
-//           <StatCards profile={profileStats} />
-//           {profile.ratingHistory.length > 0 ? (
-//             <RatingGraph history={profileStats.ratingHistory} />
-//           ) : (
-//             <div className="bg-card border border-border rounded-2xl p-6 text-center text-white/25 text-[13px] font-mono">
-//               Play your first duel to see your rating graph.
-//             </div>
-//           )}
-//           <ActivityGrid days={profileStats.activityGrid} />
-//           <GameHistoryTable entries={profile.gameHistory} />
-//         </div>
-//       </main>
-//     </div>
-//   );
-//}
-//
-
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
 import ProfileHero from "../components/profile/ProfileHero";
@@ -117,12 +6,14 @@ import ActivityGrid from "../components/profile/ActivityGrid";
 import StatCards from "../components/profile/StatCards";
 import GameHistoryTable from "../components/profile/GameHistoryTable";
 import BestWins from "../components/profile/BestWins";
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useProfile } from "../hooks/useProfile";
+import { useAuth } from "../context/AuthContext";
 import type { ProfileStats } from "../types";
 
-// Fill today's date gaps in activity grid so the heatmap always covers 1 year
+const API = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
 function fillActivityGrid(raw: { date: string; count: number }[]) {
   const map = new Map(raw.map((d) => [d.date, d.count]));
   const days: { date: string; count: number }[] = [];
@@ -137,14 +28,41 @@ function fillActivityGrid(raw: { date: string; count: number }[]) {
 }
 
 export default function ProfilePage() {
+  const { handle } = useParams<{ handle?: string }>();
+  const { user, token } = useAuth();
   const location = useLocation();
-  const { profile, loading, error } = useProfile();
+  const navigate = useNavigate();
+  const { profile, loading, error } = useProfile(handle);
+  const [friendAdded, setFriendAdded] = useState(false);
+  const [addingFriend, setAddingFriend] = useState(false);
+
+  const isOwnProfile = !handle || handle === user?.cfHandle;
 
   useEffect(() => {
     if (location.state?.scrollToBottom) {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
   }, [location]);
+
+  async function handleAddFriend() {
+    if (!profile || !token) return;
+    setAddingFriend(true);
+    try {
+      const res = await fetch(`${API}/friends/add`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ targetUserId: profile.id }),
+      });
+      if (res.ok) setFriendAdded(true);
+    } catch {
+      // ignore
+    } finally {
+      setAddingFriend(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -201,7 +119,6 @@ export default function ProfilePage() {
     );
   }
 
-  // Map backend profile → ProfileStats shape your components expect
   const profileStats: ProfileStats = {
     handle: profile.handle,
     displayName: profile.handle,
@@ -211,14 +128,14 @@ export default function ProfilePage() {
     joinedDate: profile.joinedDate,
     cfHandle: profile.cfHandle,
     rating: profile.blitzforcePoints,
-    maxRating: profile.blitzforcePoints, // TODO: track max rating properly
+    maxRating: profile.blitzforcePoints,
     rank: profile.cfTier,
     gamesPlayed: profile.gamesPlayed,
     gamesWon: profile.gamesWon,
     gamesLost: profile.gamesLost,
     winStreak: profile.winStreak,
-    maxWinStreak: profile.winStreak, // TODO: track max properly
-    bestTime: "—", // TODO: derive from gameHistory
+    maxWinStreak: profile.winStreak,
+    bestTime: "—",
     bestRank: 1,
     totalBets: profile.totalBets,
     betsWon: profile.betsWon,
@@ -236,14 +153,29 @@ export default function ProfilePage() {
         <main className="flex-1 overflow-y-auto">
           <ProfileHero profile={profileStats} />
 
-          <div className="max-w-[1400px] mx-auto px-8 py-8">
-            {/* Stats Cards */}
-            <div className="mb-6">
+          {/* Add Friend button when viewing another user */}
+          {!isOwnProfile && (
+            <div className="max-w-[1400px] mx-auto px-8 pt-4 flex justify-end animate-fade-in">
+              <button
+                onClick={handleAddFriend}
+                disabled={friendAdded || addingFriend}
+                className="px-5 py-2.5 bg-success/10 border border-success/30 text-success text-[13px] font-bold rounded-xl hover:bg-success hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {friendAdded
+                  ? "✓ Friend Added"
+                  : addingFriend
+                  ? "Adding..."
+                  : "+ Add Friend"}
+              </button>
+            </div>
+          )}
+
+          <div className="max-w-[1400px] mx-auto px-8 py-8 animate-fade-in">
+            <div className="mb-6 animate-fade-in-up">
               <StatCards profile={profileStats} />
             </div>
 
-            {/* Rating Graph & Best Wins - Side by side */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-2 gap-6 mb-6 animate-fade-in-up delay-100">
               <div>
                 {profile.ratingHistory.length > 0 ? (
                   <RatingGraph history={profileStats.ratingHistory} />
@@ -310,13 +242,11 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Activity Grid */}
-            <div className="mb-6">
+            <div className="mb-6 animate-fade-in-up delay-200">
               <ActivityGrid days={profileStats.activityGrid} />
             </div>
 
-            {/* Game History */}
-            <div>
+            <div className="animate-fade-in-up delay-300">
               {profile.gameHistory.length > 0 ? (
                 <GameHistoryTable entries={profile.gameHistory} />
               ) : (
@@ -342,11 +272,18 @@ export default function ProfilePage() {
                       No game history yet
                     </p>
                     <p className="text-white/25 text-[13px] font-mono mb-6">
-                      Your completed duels will appear here
+                      {isOwnProfile
+                        ? "Your completed duels will appear here"
+                        : "No completed duels yet"}
                     </p>
-                    <button className="px-6 py-3 bg-accent hover:bg-accent-dim text-white text-[13px] font-bold rounded-lg transition-colors">
-                      Play your first duel →
-                    </button>
+                    {isOwnProfile && (
+                      <button
+                        onClick={() => navigate("/game")}
+                        className="px-6 py-3 bg-accent hover:bg-accent-dim text-white text-[13px] font-bold rounded-lg transition-colors"
+                      >
+                        Play your first duel →
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -356,4 +293,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-} //
+}

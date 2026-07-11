@@ -7,6 +7,7 @@ const userRoutes = require("./modules/user/user.routes");
 const matchmakingRoutes = require("./modules/matchmaking/matchmaking.routes");
 const duelRoutes = require("./modules/duel/duel.routes");
 const rankingsRoutes = require("./modules/rankings/rankings.routes");
+const friendsRoutes = require("./modules/friends/friends.routes");
 
 require("./jobs/cf.sync.job");
 require("./jobs/matchmaking.worker");
@@ -23,6 +24,7 @@ app.use("/user", userRoutes);
 app.use("/matchmaking", matchmakingRoutes);
 app.use("/duel", duelRoutes);
 app.use("/rankings", rankingsRoutes);
+app.use("/friends", friendsRoutes);
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => res.json({ status: "ok" }));

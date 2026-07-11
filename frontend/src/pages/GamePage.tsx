@@ -49,7 +49,6 @@ function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
 
   // Watch for duel finish
   const isDone = duel?.status === "finished";
-  const didIWin = duel?.winnerHandle === user?.cfHandle;
   // Use real duel data if available, fallback to loading state
   const problem: Problem | null = duel
     ? {
@@ -125,7 +124,7 @@ function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
                 ?.filter((s) => s.handle === duel.players.me.handle)
                 .map((s) => ({
                   id: String(s.id),
-                  verdict: s.verdict,
+                  verdict: s.verdict as import("../types").Verdict,
                   language: "GNU C++17",
                   timeMs: null,
                   memoryMb: null,
@@ -145,7 +144,7 @@ function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
                 ?.filter((s) => s.handle === duel.players.opponent.handle)
                 .map((s) => ({
                   id: String(s.id),
-                  verdict: s.verdict,
+                  verdict: s.verdict as import("../types").Verdict,
                   language: "GNU C++17",
                   timeMs: null,
                   memoryMb: null,
