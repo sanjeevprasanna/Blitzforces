@@ -2,7 +2,7 @@ const redis = require("../../config/redis");
 const repo = require("./duel.repository");
 const { selectProblem } = require("../problem/problem.service");
 
-const WIN_POINTS = 10;
+const WIN_POINTS  = 10;
 const LOSS_POINTS = -5;
 
 // Called by matchmaking when a pair is found
@@ -12,6 +12,7 @@ async function createDuel({
   avgRating,
   duration,
   mode,
+  betAmount = 0,
   isBot,
 }) {
   // Select problem unsolved by both
@@ -23,6 +24,7 @@ async function createDuel({
     player2Id, // null if bot
     problemId: problem.id,
     mode,
+    betAmount,
     durationMins: duration,
   });
 
@@ -63,9 +65,7 @@ function scheduleBotResult(duelId, playerId, durationMins) {
       const duel = await repo.getDuelById(duelId);
       if (!duel || duel.status !== "active") return;
 
-      if (botWins) {
-        await finishDuel(duelId, null); // null = bot wins
-      }
+      if (botWins) await finishDuel(duelId, "bot");
       // If bot doesn't win — poller handles player AC or timeout
     } catch (err) {
       console.error("[bot] Error scheduling bot result:", err.message);
@@ -105,7 +105,8 @@ async function handlePlayerAC(duelId, userId, submittedAt) {
   await finishDuel(duelId, userId);
 }
 
-// Finalize duel: set winner, update points, write history
+// Finalize duel: set winner, update points, write history.
+// winnerId can be null for a draw, or "bot" for a bot win.
 async function finishDuel(duelId, winnerId) {
   // Mark as finished in Redis immediately to prevent double-finish
   const prev = await redis.hGet(`duel:${duelId}`, "status");
@@ -115,40 +116,103 @@ async function finishDuel(duelId, winnerId) {
   const duel = await repo.getDuelById(duelId);
   if (!duel) return;
 
-  const isBot = duel.player2_id === null;
-  const p1Id = duel.player1_id;
-  const p2Id = duel.player2_id;
+  const isBot      = duel.player2_id === null;
+  const p1Id       = duel.player1_id;
+  const p2Id       = duel.player2_id;
+  const isBetMode  = duel.mode === "bet" && duel.bet_amount > 0;
+  const betAmount  = duel.bet_amount ?? 0;
+  const botWon     = winnerId === "bot";
 
-  if (winnerId) {
+  if (winnerId && !botWon) {
     await repo.setDuelWinner(duelId, winnerId);
     const loserId = winnerId === p1Id ? p2Id : p1Id;
 
-    // Update winner points
-    const winnerBefore = await repo.getUserPoints(winnerId);
-    const winnerAfter = await repo.updateUserPoints(winnerId, WIN_POINTS);
-    await repo.insertPointsHistory({
-      userId: winnerId,
-      duelId,
-      pointsBefore: winnerBefore,
-      pointsAfter: winnerAfter,
-      delta: WIN_POINTS,
-    });
-
-    // Update loser points (only if real player, not bot)
-    if (loserId && !isBot) {
-      const loserBefore = await repo.getUserPoints(loserId);
-      const loserAfter = await repo.updateUserPoints(loserId, LOSS_POINTS);
+    if (isBetMode) {
+      // Both already had bet_amount escrowed (deducted on joinQueue).
+      // Winner receives 2x bet_amount (own back + opponent's).
+      const winnerBefore = await repo.getUserPoints(winnerId);
+      const winnerAfter  = await repo.updateUserPoints(winnerId, betAmount * 2);
       await repo.insertPointsHistory({
-        userId: loserId,
+        userId: winnerId, duelId,
+        pointsBefore: winnerBefore, pointsAfter: winnerAfter,
+        delta: betAmount,
+      });
+      // Loser already had points deducted from escrow.
+      if (loserId && !isBot) {
+        const loserCurrent = await repo.getUserPoints(loserId);
+        await repo.insertPointsHistory({
+          userId: loserId, duelId,
+          pointsBefore: loserCurrent + betAmount, // before escrow
+          pointsAfter: loserCurrent,
+          delta: -betAmount,
+        });
+      }
+    } else {
+      // Normal mode: fixed ±points
+      const winnerBefore = await repo.getUserPoints(winnerId);
+      const winnerAfter  = await repo.updateUserPoints(winnerId, WIN_POINTS);
+      await repo.insertPointsHistory({
+        userId: winnerId, duelId,
+        pointsBefore: winnerBefore, pointsAfter: winnerAfter,
+        delta: WIN_POINTS,
+      });
+      if (loserId && !isBot) {
+        const loserBefore = await repo.getUserPoints(loserId);
+        const loserAfter  = await repo.updateUserPoints(loserId, LOSS_POINTS);
+        await repo.insertPointsHistory({
+          userId: loserId, duelId,
+          pointsBefore: loserBefore, pointsAfter: loserAfter,
+          delta: LOSS_POINTS,
+        });
+      }
+    }
+  } else if (botWon) {
+    await repo.setDuelTie(duelId);
+    await redis.hSet(`duel:${duelId}`, "winner", "bot");
+    if (isBetMode) {
+      const playerCurrent = await repo.getUserPoints(p1Id);
+      await repo.insertPointsHistory({
+        userId: p1Id, duelId,
+        pointsBefore: playerCurrent + betAmount,
+        pointsAfter: playerCurrent,
+        delta: -betAmount,
+      });
+    } else {
+      const playerBefore = await repo.getUserPoints(p1Id);
+      const playerAfter = await repo.updateUserPoints(p1Id, LOSS_POINTS);
+      await repo.insertPointsHistory({
+        userId: p1Id,
         duelId,
-        pointsBefore: loserBefore,
-        pointsAfter: loserAfter,
+        pointsBefore: playerBefore,
+        pointsAfter: playerAfter,
         delta: LOSS_POINTS,
       });
     }
   } else {
-    // Tie (timeout with no AC from either)
+    // Tie / timeout
     await repo.setDuelTie(duelId);
+    await redis.hSet(`duel:${duelId}`, "winner", "draw");
+    // In bet mode: refund both players' escrowed bets
+    if (isBetMode) {
+      const [p1Before, p2Before] = await Promise.all([
+        repo.getUserPoints(p1Id),
+        p2Id ? repo.getUserPoints(p2Id) : Promise.resolve(0),
+      ]);
+      await repo.updateUserPoints(p1Id, betAmount);
+      await repo.insertPointsHistory({
+        userId: p1Id, duelId,
+        pointsBefore: p1Before, pointsAfter: p1Before + betAmount,
+        delta: betAmount,
+      });
+      if (p2Id) {
+        await repo.updateUserPoints(p2Id, betAmount);
+        await repo.insertPointsHistory({
+          userId: p2Id, duelId,
+          pointsBefore: p2Before, pointsAfter: p2Before + betAmount,
+          delta: betAmount,
+        });
+      }
+    }
   }
 
   // Cleanup Redis
@@ -192,11 +256,15 @@ async function getDuelStatus(duelId, userId) {
   if (!duel) throw new Error("Duel not found");
 
   const isBot = duel.player2_id === null;
+  const duelMeta = await redis.hGetAll(`duel:${duelId}`);
+  const redisWinner = duelMeta?.winner;
   const timeLeft = Math.max(0, new Date(duel.ends_at) - Date.now());
 
   return {
     id: duel.id,
     status: duel.status,
+    mode: duel.mode,
+    betAmount: duel.bet_amount ?? 0,
     isBot,
     timeLeftMs: timeLeft,
     problem: {
@@ -230,7 +298,9 @@ async function getDuelStatus(duelId, userId) {
       penaltyMinutes: s.penalty_minutes,
     })),
     winnerHandle:
-      duel.winner_id === duel.player1_id
+      redisWinner === "bot"
+        ? "BlitzBot"
+        : duel.winner_id === duel.player1_id
         ? duel.p1_handle
         : duel.winner_id === duel.player2_id
           ? duel.p2_handle
@@ -252,7 +322,7 @@ async function forfeitDuel(duelId, forfeitingUserId) {
   const opponentId =
     duel.player1_id === forfeitingUserId ? duel.player2_id : duel.player1_id;
 
-  await finishDuel(duelId, opponentId ?? null);
+  await finishDuel(duelId, opponentId ?? "bot");
 }
 
 module.exports = {

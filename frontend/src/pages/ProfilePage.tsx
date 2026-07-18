@@ -32,11 +32,18 @@ export default function ProfilePage() {
   const { user, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, loading, error } = useProfile(handle);
+  const { profile, loading, error, refetch } = useProfile(handle);
   const [friendAdded, setFriendAdded] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
 
   const isOwnProfile = !handle || handle === user?.cfHandle;
+
+  // Refetch profile when returning from game (after duel)
+  useEffect(() => {
+    if (isOwnProfile) {
+      refetch();
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (location.state?.scrollToBottom) {

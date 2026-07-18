@@ -5,19 +5,13 @@ const ThemeContext = createContext({
     toggle: () => { },
 });
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState(() => {
-        const saved = localStorage.getItem("bf-theme") ?? "dark";
-        // Apply immediately so there's no flash before the useEffect runs
-        document.documentElement.classList.toggle("dark", saved === "dark");
-        return saved;
-    });
+    const [theme] = useState("dark");
     useEffect(() => {
         const root = document.documentElement;
-        // Tailwind darkMode:"class" reads the `dark` class on <html>
-        root.classList.toggle("dark", theme === "dark");
-        localStorage.setItem("bf-theme", theme);
-    }, [theme]);
-    const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+        // Force dark mode
+        root.classList.add("dark");
+    }, []);
+    const toggle = () => { }; // No-op
     return (_jsx(ThemeContext.Provider, { value: { theme, toggle }, children: children }));
 }
 export function useTheme() {

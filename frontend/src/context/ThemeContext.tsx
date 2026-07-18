@@ -18,21 +18,15 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = (localStorage.getItem("bf-theme") as Theme) ?? "dark";
-    // Apply immediately so there's no flash before the useEffect runs
-    document.documentElement.classList.toggle("dark", saved === "dark");
-    return saved;
-  });
+  const [theme] = useState<Theme>("dark");
 
   useEffect(() => {
     const root = document.documentElement;
-    // Tailwind darkMode:"class" reads the `dark` class on <html>
-    root.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("bf-theme", theme);
-  }, [theme]);
+    // Force dark mode
+    root.classList.add("dark");
+  }, []);
 
-  const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+  const toggle = () => {}; // No-op
 
   return (
     <ThemeContext.Provider value={{ theme, toggle }}>

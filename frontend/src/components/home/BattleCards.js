@@ -17,8 +17,8 @@ const CARDS = [
     {
         id: "bet",
         title: "Bet Duel",
-        description: "Wager rating points · winner takes all · coming soon",
-        tag: "coming soon",
+        description: "Wager rating points · winner takes all",
+        tag: "live",
         iconBg: "bg-warn/10",
         iconColor: "text-warn",
         tagStyle: "text-warn border-warn/30 bg-warn/10",
@@ -31,24 +31,25 @@ export default function BattleCards() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     async function handleFindMatch() {
-        if (selected !== "rated")
-            return; // only rated for now
+        if (!selected)
+            return;
         setLoading(true);
         setError(null);
         try {
-            navigate("/game");
+            navigate(`/game?mode=${selected}`);
         }
         catch (err) {
             setError(err.message);
             setLoading(false);
         }
     }
-    return (_jsxs("section", { className: "px-10 py-9 border-b border-border animate-fade-in", children: [_jsx("h2", { className: "text-[18px] font-bold tracking-tight text-white mb-5 animate-fade-in-up", children: "Start a battle" }), _jsx("div", { className: "grid grid-cols-2 gap-4", children: CARDS.map((card, index) => (_jsxs("button", { onClick: () => card.id !== "bet" &&
-                        setSelected((prev) => (prev === card.id ? null : card.id)), disabled: card.id === "bet", className: `relative flex items-center gap-4 p-5 rounded-[14px] border text-left overflow-hidden transition-all duration-300 group disabled:opacity-40 disabled:cursor-not-allowed animate-fade-in-up ${["delay-100", "delay-200"][index] ?? "delay-100"} ${selected === card.id
+    return (_jsxs("section", { className: "px-10 py-9 border-b border-border animate-fade-in", children: [_jsx("h2", { className: "text-[18px] font-bold tracking-tight text-white mb-5 animate-fade-in-up", children: "Start a battle" }), _jsx("div", { className: "grid grid-cols-2 gap-4", children: CARDS.map((card, index) => (_jsxs("button", { onClick: () => setSelected((prev) => (prev === card.id ? null : card.id)), className: `relative flex items-center gap-4 p-5 rounded-[14px] border text-left overflow-hidden transition-all duration-300 group disabled:opacity-40 disabled:cursor-not-allowed animate-fade-in-up ${["delay-100", "delay-200"][index] ?? "delay-100"} ${selected === card.id
                         ? "border-accent bg-accent/10"
                         : card.featured
                             ? "border-accent-dim bg-card hover:bg-elevated hover:-translate-y-1"
                             : "border-border bg-card hover:bg-elevated hover:border-border-bright hover:-translate-y-1"}`, children: [card.featured && (_jsx("div", { className: "absolute -top-8 -right-8 w-28 h-28 rounded-full pointer-events-none", style: {
                                 background: "radial-gradient(circle, rgba(124,106,247,0.2) 0%, transparent 70%)",
-                            } })), _jsx("div", { className: `w-[52px] h-[52px] rounded-xl flex items-center justify-center flex-shrink-0 ${card.iconBg} ${card.iconColor}`, children: card.icon }), _jsxs("div", { className: "flex-1 min-w-0", children: [_jsxs("p", { className: "text-[15px] font-bold text-white flex items-center gap-2 mb-1", children: [card.title, card.hot && (_jsx("span", { className: "text-[9px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded tracking-wide", children: "HOT" }))] }), _jsx("p", { className: "text-[12px] text-white/30 leading-snug", children: card.description })] }), _jsxs("div", { className: "flex flex-col items-end gap-2 flex-shrink-0", children: [_jsx("span", { className: `text-[11px] font-bold font-mono px-2 py-1 rounded-md border ${card.tagStyle ?? "text-white/30 border-border"}`, children: card.tag }), _jsx("span", { className: "text-[18px] text-white/25 transition-all group-hover:text-white group-hover:translate-x-1", children: "\u2192" })] })] }, card.id))) }), error && _jsx("p", { className: "mt-3 text-danger text-[13px]", children: error }), selected === "rated" && (_jsx("div", { className: "mt-4 animate-slideDown", children: _jsxs("div", { className: "flex items-center gap-5 px-5 py-4 bg-card border border-accent rounded-xl", children: [_jsxs("div", { className: "flex-1", children: [_jsx("p", { className: "text-[14px] font-bold text-white mb-1", children: "Rated Battle \u2014 ELO at stake" }), _jsx("p", { className: "text-[12px] text-white/30", children: "Matched near your rating \u00B7 +10 pts win / \u22125 pts loss" })] }), _jsxs("button", { onClick: handleFindMatch, disabled: loading, className: "flex items-center gap-2 px-6 py-3 bg-accent text-white text-[14px] font-bold rounded-lg hover:opacity-90 hover:-translate-y-px transition-all flex-shrink-0 disabled:opacity-50", children: [loading ? "Joining..." : "Find match", _jsxs("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [_jsx("line", { x1: "5", y1: "12", x2: "19", y2: "12" }), _jsx("polyline", { points: "12 5 19 12 12 19" })] })] })] }) }))] }));
+                            } })), _jsx("div", { className: `w-[52px] h-[52px] rounded-xl flex items-center justify-center flex-shrink-0 ${card.iconBg} ${card.iconColor}`, children: card.icon }), _jsxs("div", { className: "flex-1 min-w-0", children: [_jsxs("p", { className: "text-[15px] font-bold text-white flex items-center gap-2 mb-1", children: [card.title, card.hot && (_jsx("span", { className: "text-[9px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded tracking-wide", children: "HOT" }))] }), _jsx("p", { className: "text-[12px] text-white/30 leading-snug", children: card.description })] }), _jsxs("div", { className: "flex flex-col items-end gap-2 flex-shrink-0", children: [_jsx("span", { className: `text-[11px] font-bold font-mono px-2 py-1 rounded-md border ${card.tagStyle ?? "text-white/30 border-border"}`, children: card.tag }), _jsx("span", { className: "text-[18px] text-white/25 transition-all group-hover:text-white group-hover:translate-x-1", children: "\u2192" })] })] }, card.id))) }), error && _jsx("p", { className: "mt-3 text-danger text-[13px]", children: error }), selected && (_jsx("div", { className: "mt-4 animate-slideDown", children: _jsxs("div", { className: "flex items-center gap-5 px-5 py-4 bg-card border border-accent rounded-xl", children: [_jsxs("div", { className: "flex-1", children: [_jsx("p", { className: "text-[14px] font-bold text-white mb-1", children: selected === "rated" ? "Rated Battle — ELO at stake" : "Bet Duel — Winner takes all" }), _jsx("p", { className: "text-[12px] text-white/30", children: selected === "rated"
+                                        ? "Matched near your rating · +10 pts win / −5 pts loss"
+                                        : "Choose your wager on the next screen" })] }), _jsxs("button", { onClick: handleFindMatch, disabled: loading, className: "flex items-center gap-2 px-6 py-3 bg-accent text-white text-[14px] font-bold rounded-lg hover:opacity-90 hover:-translate-y-px transition-all flex-shrink-0 disabled:opacity-50", children: [loading ? "Joining..." : "Find match", _jsxs("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [_jsx("line", { x1: "5", y1: "12", x2: "19", y2: "12" }), _jsx("polyline", { points: "12 5 19 12 12 19" })] })] })] }) }))] }));
 }

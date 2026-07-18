@@ -1,49 +1,42 @@
 const pool = require("../../config/db");
 
 async function sendRequest(userId, targetId) {
-  // Check if we already sent a request or are already friends
+  // Check if already friends
   const existing = await pool.query(
     `SELECT status FROM friends WHERE user_id = $1 AND friend_id = $2`,
     [userId, targetId]
   );
   if (existing.rows.length > 0) {
-    throw new Error(`Already ${existing.rows[0].status}`);
-  }
-
-  // If they already sent us a request → auto-accept both directions
-  const reverse = await pool.query(
-    `SELECT status FROM friends WHERE user_id = $1 AND friend_id = $2`,
-    [targetId, userId]
-  );
-  if (reverse.rows.length > 0 && reverse.rows[0].status === "pending") {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query(
-        `UPDATE friends SET status = 'accepted', accepted_at = NOW()
-         WHERE user_id = $1 AND friend_id = $2`,
-        [targetId, userId]
-      );
-      await client.query(
-        `INSERT INTO friends (user_id, friend_id, status, accepted_at)
-         VALUES ($1, $2, 'accepted', NOW())`,
-        [userId, targetId]
-      );
-      await client.query("COMMIT");
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
+    if (existing.rows[0].status === "accepted") {
+      throw new Error("Already friends");
     }
-    return "accepted";
+    // If pending, re-adding should complete to accepted
   }
 
-  await pool.query(
-    `INSERT INTO friends (user_id, friend_id, status) VALUES ($1, $2, 'pending')`,
-    [userId, targetId]
-  );
-  return "pending";
+  // Instant mutual friendship — both directions
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO friends (user_id, friend_id, status, accepted_at)
+       VALUES ($1, $2, 'accepted', NOW())
+       ON CONFLICT (user_id, friend_id) DO UPDATE SET status = 'accepted', accepted_at = NOW()`,
+      [userId, targetId]
+    );
+    await client.query(
+      `INSERT INTO friends (user_id, friend_id, status, accepted_at)
+       VALUES ($1, $2, 'accepted', NOW())
+       ON CONFLICT (user_id, friend_id) DO UPDATE SET status = 'accepted', accepted_at = NOW()`,
+      [targetId, userId]
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  return "accepted";
 }
 
 async function acceptRequest(userId, requesterId) {

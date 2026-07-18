@@ -85,8 +85,8 @@ export default function RatingGraph({ history }: RatingGraphProps) {
       <div className="relative">
         {/* Y-axis labels */}
         <div className="absolute left-0 top-0 h-full flex flex-col justify-between pointer-events-none pr-2">
-          {[...yLabels].reverse().map((r) => (
-            <span key={r} className="text-[10px] font-mono text-white/20">{r}</span>
+          {[...yLabels].reverse().map((r, i) => (
+            <span key={i} className="text-[10px] font-mono text-white/20">{r}</span>
           ))}
         </div>
 

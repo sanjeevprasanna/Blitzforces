@@ -14,26 +14,37 @@
     --color-black:         10  10  10;      /* #0A0A0A - Deep black */
     --color-white:         255 255 255;     /* #FFFFFF - Pure white */
     --color-cyan:          0   229 255;     /* #00E5FF - Electric cyan */
-    
+
     /* Surface Hierarchy */
     --color-base:          10  10  10;      /* Background */
     --color-surface:       15  15  15;      /* Cards */
     --color-elevated:      20  20  20;      /* Elevated elements */
-    
+
     /* Cyan Variations */
     --color-cyan-bright:   102 242 255;     /* #66F2FF */
     --color-cyan-dark:     0   150 180;     /* #0096B4 */
-    
+
     /* Semantic (Cyan-based) */
     --color-success:       0   255 163;     /* #00FFA3 */
     --color-danger:        255 61  113;     /* #FF3D71 */
     --color-warn:          255 184 0;       /* #FFB800 */
+
+    /* Text color */
+    --text-color:          255 255 255;     /* white in dark mode */
+  }
+
+  html:not(.dark) {
+    /* Light mode overrides */
+    --color-base:          245 245 245;     /* #F5F5F5 */
+    --color-surface:       255 255 255;     /* #FFFFFF */
+    --color-elevated:      240 240 240;     /* #F0F0F0 */
+    --text-color:          20  20  20;      /* dark text */
   }
 
   html, body, #root {
-    @apply h-full bg-black font-inter antialiased;
-    color: white;
-    background-color: rgb(var(--color-black));
+    @apply h-full font-inter antialiased;
+    color: rgb(var(--text-color));
+    background-color: rgb(var(--color-base));
   }
 
   /* Premium Scrollbar */

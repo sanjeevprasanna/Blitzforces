@@ -34,8 +34,9 @@ export function useProfile(handle?: string) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
+  const fetchProfile = () => {
     if (!token) return;
     const API = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
     const url = handle
@@ -44,7 +45,6 @@ export function useProfile(handle?: string) {
 
     setLoading(true);
     setError(null);
-    setProfile(null);
 
     fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
@@ -56,7 +56,13 @@ export function useProfile(handle?: string) {
       .then(setProfile)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token, handle]);
+  };
 
-  return { profile, loading, error };
+  useEffect(() => {
+    fetchProfile();
+  }, [token, handle, refetchTrigger]);
+
+  const refetch = () => setRefetchTrigger((t) => t + 1);
+
+  return { profile, loading, error, refetch };
 }

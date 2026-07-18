@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import MatchmakingScreen from "../components/matchmaking/MatchmakingScreen";
 import PlayerHeader from "../components/game/PlayerHeader";
@@ -10,18 +10,36 @@ import ResultBanner from "../components/game/ResultBanner";
 import { useTimer } from "../hooks/useTimer";
 import { useAuth } from "../context/AuthContext";
 import { useDuel } from "../hooks/useDuel";
+const API = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 export default function GamePage() {
     // Lift useDuel to top so both screens share the same state
     const duelState = useDuel();
+    const [searchParams] = useSearchParams();
+    const modeParam = searchParams.get("mode");
+    const battleMode = modeParam ?? "normal";
     const [screen, setScreen] = useState(duelState.duelId ? "game" : "matchmaking");
     useEffect(() => {
         if (duelState.mmStatus === "matched" && duelState.duelId) {
             setScreen("game");
         }
     }, [duelState.mmStatus, duelState.duelId]);
-    return screen === "matchmaking" ? (_jsxs("div", { className: "flex flex-col min-h-screen bg-base font-syne", children: [_jsx(Navbar, { centerLabel: "Finding match" }), _jsx(MatchmakingScreen, { duelState: duelState })] })) : (_jsxs("div", { className: "flex flex-col min-h-screen bg-base font-syne", children: [_jsx(Navbar, { centerLabel: "Rated Battle" }), _jsx(BattleArena, { duelState: duelState })] }));
+    // Lock navigation during active game
+    useEffect(() => {
+        if (screen === "game" && !duelState.duel?.status)
+            return;
+        const handleBeforeUnload = (e) => {
+            if (screen === "game" && duelState.duel?.status === "active") {
+                e.preventDefault();
+                return;
+            }
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [screen, duelState.duel?.status]);
+    const centerLabel = screen === "matchmaking" ? "Finding match" : battleMode === "bet" ? "Bet Duel" : "Rated Battle";
+    return (_jsxs("div", { className: "flex flex-col min-h-screen bg-base font-syne", children: [_jsx(Navbar, { centerLabel: centerLabel }), screen === "matchmaking" ? (_jsx(MatchmakingScreen, { duelState: duelState })) : (_jsx(BattleArena, { duelState: duelState, battleMode: battleMode }))] }));
 }
-function BattleArena({ duelState }) {
+function BattleArena({ duelState, battleMode }) {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { duel } = duelState;
@@ -38,7 +56,9 @@ function BattleArena({ duelState }) {
             cfUrl: duel.problem.cfUrl,
         }
         : null;
-    const ratingDelta = 10; // normal mode fixed
+    const isBet = duel?.mode === "bet" || battleMode === "bet";
+    const betAmount = duel?.betAmount ?? 0;
+    const ratingDelta = isBet ? betAmount : 10;
     if (!problem) {
         return (_jsx("div", { className: "flex-1 flex items-center justify-center", children: _jsx("p", { className: "text-white/30 font-mono animate-pulse", children: "Loading duel..." }) }));
     }
@@ -47,7 +67,7 @@ function BattleArena({ duelState }) {
             return;
         const token = localStorage.getItem("bf-token");
         try {
-            await fetch(`http://localhost:3000/duel/${duel.id}/forfeit`, {
+            await fetch(`${API}/duel/${duel.id}/forfeit`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -90,5 +110,5 @@ function BattleArena({ duelState }) {
                                 timeMs: null,
                                 memoryMb: null,
                                 submittedAt: new Date(s.submittedAt),
-                            })) ?? [], dotColor: "#1d9e75", side: "right" }) })] }), _jsxs("div", { className: "flex items-center justify-between px-6 py-2.5 bg-surface border-t border-border", children: [_jsxs("div", { className: "flex items-center gap-2 text-[12px] text-white/30", children: [_jsx("span", { className: "w-[7px] h-[7px] rounded-full bg-success animate-pulse2" }), "Live \u00B7 polling every 5s"] }), _jsxs("div", { className: "flex items-center gap-3", children: [_jsxs("span", { className: "text-[12px] font-mono text-white/30", children: ["Rated \u00B7 \u00B1", ratingDelta, " pts"] }), _jsx("button", { onClick: handleForfeit, className: "text-[12px] font-semibold text-danger px-3.5 py-1.5 border border-danger/20 bg-danger/5 rounded-md hover:bg-danger/10 transition-colors", children: "Forfeit" })] })] }), isDone && (_jsx(ResultBanner, { winnerHandle: duel?.winnerHandle ?? null, myHandle: user?.cfHandle ?? "", elapsedSeconds: remainingSeconds, ratingDelta: ratingDelta, onRematch: () => navigate("/game"), onHome: () => navigate("/") }))] }));
+                            })) ?? [], dotColor: "#1d9e75", side: "right" }) })] }), _jsxs("div", { className: "flex items-center justify-between px-6 py-2.5 bg-surface border-t border-border", children: [_jsxs("div", { className: "flex items-center gap-2 text-[12px] text-white/30", children: [_jsx("span", { className: "w-[7px] h-[7px] rounded-full bg-success animate-pulse2" }), "Live \u00B7 polling every 5s"] }), _jsxs("div", { className: "flex items-center gap-3", children: [_jsx("span", { className: "text-[12px] font-mono text-white/30", children: isBet ? `Bet · ${betAmount} pts` : `Rated · ±${ratingDelta} pts` }), _jsx("button", { onClick: handleForfeit, className: "text-[12px] font-semibold text-danger px-3.5 py-1.5 border border-danger/20 bg-danger/5 rounded-md hover:bg-danger/10 transition-colors", children: "Forfeit" })] })] }), isDone && (_jsx(ResultBanner, { winnerHandle: duel?.winnerHandle ?? null, myHandle: user?.cfHandle ?? "", elapsedSeconds: remainingSeconds, ratingDelta: ratingDelta, onRematch: () => navigate("/game"), onHome: () => navigate("/") }))] }));
 }

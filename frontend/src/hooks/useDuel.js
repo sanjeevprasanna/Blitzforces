@@ -12,13 +12,14 @@ export function useDuel() {
     const duelPollRef = useRef(null);
     const authHeader = { Authorization: `Bearer ${token}` };
     // ── Join queue ──────────────────────────────────────────────────────────────
-    const joinQueue = useCallback(async () => {
+    const joinQueue = useCallback(async (mode = "normal", betAmount = 0) => {
         setError(null);
         setMmStatus("queued");
         try {
             const res = await fetch(`${API}/matchmaking/join`, {
                 method: "POST",
-                headers: authHeader,
+                headers: { ...authHeader, "Content-Type": "application/json" },
+                body: JSON.stringify({ mode, betAmount }),
             });
             const data = await res.json();
             if (!res.ok)
@@ -26,14 +27,16 @@ export function useDuel() {
             if (data.status === "active_duel") {
                 setDuelId(data.duelId);
                 setMmStatus("matched");
-                return;
+                return true;
             }
             // Start polling matchmaking status
             startMmPolling();
+            return true;
         }
         catch (err) {
             setError(err.message);
             setMmStatus("error");
+            return false;
         }
     }, [token]);
     // ── Leave queue ─────────────────────────────────────────────────────────────

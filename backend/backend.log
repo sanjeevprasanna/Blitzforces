@@ -1,0 +1,10 @@
+◇ injected env (4) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+CWD: /Users/sanjeevprasanna/projects/Blitzforces/backend
+ENV: postgresql://admin:12345678@localhost:5432/blitz
+Connected to DB
+connected
+[matchmaking.worker] Started
+[server] Running on port 3000
+[cf.sync] sanjeev2005prasanna: 169 problems synced
+[cf.sync] -grandmaster-: 358 problems synced

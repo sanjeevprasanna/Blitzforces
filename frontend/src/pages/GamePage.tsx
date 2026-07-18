@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import MatchmakingScreen from "../components/matchmaking/MatchmakingScreen";
 import PlayerHeader from "../components/game/PlayerHeader";
@@ -11,11 +11,16 @@ import { useAuth } from "../context/AuthContext";
 import { useDuel } from "../hooks/useDuel";
 import type { Problem } from "../types";
 
+const API = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
 type Screen = "matchmaking" | "game";
 
 export default function GamePage() {
   // Lift useDuel to top so both screens share the same state
   const duelState = useDuel();
+  const [searchParams] = useSearchParams();
+  const modeParam = searchParams.get("mode") as "normal" | "bet" | null;
+  const battleMode = modeParam ?? "normal";
 
   const [screen, setScreen] = useState<Screen>(
     duelState.duelId ? "game" : "matchmaking",
@@ -27,20 +32,37 @@ export default function GamePage() {
     }
   }, [duelState.mmStatus, duelState.duelId]);
 
-  return screen === "matchmaking" ? (
+  // Lock navigation during active game
+  useEffect(() => {
+    if (screen === "game" && !duelState.duel?.status) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (screen === "game" && duelState.duel?.status === "active") {
+        e.preventDefault();
+        return;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [screen, duelState.duel?.status]);
+
+  const centerLabel = screen === "matchmaking" ? "Finding match" : battleMode === "bet" ? "Bet Duel" : "Rated Battle";
+
+  return (
     <div className="flex flex-col min-h-screen bg-base font-syne">
-      <Navbar centerLabel="Finding match" />
-      <MatchmakingScreen duelState={duelState} />
-    </div>
-  ) : (
-    <div className="flex flex-col min-h-screen bg-base font-syne">
-      <Navbar centerLabel="Rated Battle" />
-      <BattleArena duelState={duelState} />
+      <Navbar centerLabel={centerLabel} />
+      {screen === "matchmaking" ? (
+        <MatchmakingScreen duelState={duelState} />
+      ) : (
+        <BattleArena duelState={duelState} battleMode={battleMode} />
+      )}
     </div>
   );
 }
 
-function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
+function BattleArena({ duelState, battleMode }: { duelState: ReturnType<typeof useDuel>; battleMode: string }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { duel } = duelState;
@@ -60,7 +82,9 @@ function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
       }
     : null;
 
-  const ratingDelta = 10; // normal mode fixed
+  const isBet      = duel?.mode === "bet" || battleMode === "bet";
+  const betAmount  = duel?.betAmount ?? 0;
+  const ratingDelta = isBet ? betAmount : 10;
 
   if (!problem) {
     return (
@@ -74,7 +98,7 @@ function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
 
     const token = localStorage.getItem("bf-token");
     try {
-      await fetch(`http://localhost:3000/duel/${duel.id}/forfeit`, {
+      await fetch(`${API}/duel/${duel.id}/forfeit`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -164,7 +188,7 @@ function BattleArena({ duelState }: { duelState: ReturnType<typeof useDuel> }) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[12px] font-mono text-white/30">
-            Rated · ±{ratingDelta} pts
+            {isBet ? `Bet · ${betAmount} pts` : `Rated · ±${ratingDelta} pts`}
           </span>
           <button
             onClick={handleForfeit}

@@ -48,8 +48,8 @@ const CARDS: CardConfig[] = [
   {
     id: "bet",
     title: "Bet Duel",
-    description: "Wager rating points · winner takes all · coming soon",
-    tag: "coming soon",
+    description: "Wager rating points · winner takes all",
+    tag: "live",
     iconBg: "bg-warn/10",
     iconColor: "text-warn",
     tagStyle: "text-warn border-warn/30 bg-warn/10",
@@ -77,11 +77,11 @@ export default function BattleCards() {
   const navigate = useNavigate();
 
   async function handleFindMatch() {
-    if (selected !== "rated") return; // only rated for now
+    if (!selected) return;
     setLoading(true);
     setError(null);
     try {
-      navigate("/game");
+      navigate(`/game?mode=${selected}`);
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -99,10 +99,8 @@ export default function BattleCards() {
           <button
             key={card.id}
             onClick={() =>
-              card.id !== "bet" &&
               setSelected((prev) => (prev === card.id ? null : card.id))
             }
-            disabled={card.id === "bet"}
             className={`relative flex items-center gap-4 p-5 rounded-[14px] border text-left overflow-hidden transition-all duration-300 group disabled:opacity-40 disabled:cursor-not-allowed animate-fade-in-up ${["delay-100", "delay-200"][index] ?? "delay-100"} ${selected === card.id
                 ? "border-accent bg-accent/10"
                 : card.featured
@@ -153,15 +151,17 @@ export default function BattleCards() {
 
       {error && <p className="mt-3 text-danger text-[13px]">{error}</p>}
 
-      {selected === "rated" && (
+      {selected && (
         <div className="mt-4 animate-slideDown">
           <div className="flex items-center gap-5 px-5 py-4 bg-card border border-accent rounded-xl">
             <div className="flex-1">
               <p className="text-[14px] font-bold text-white mb-1">
-                Rated Battle — ELO at stake
+                {selected === "rated" ? "Rated Battle — ELO at stake" : "Bet Duel — Winner takes all"}
               </p>
               <p className="text-[12px] text-white/30">
-                Matched near your rating · +10 pts win / −5 pts loss
+                {selected === "rated"
+                  ? "Matched near your rating · +10 pts win / −5 pts loss"
+                  : "Choose your wager on the next screen"}
               </p>
             </div>
             <button

@@ -8,6 +8,8 @@ export type MatchmakingStatus = "idle" | "queued" | "matched" | "error";
 export interface DuelStatus {
   id: number;
   status: "active" | "finished";
+  mode: "normal" | "bet";
+  betAmount: number;
   isBot: boolean;
   timeLeftMs: number;
   problem: {
@@ -47,26 +49,29 @@ export function useDuel() {
   const authHeader = { Authorization: `Bearer ${token}` };
 
   // ── Join queue ──────────────────────────────────────────────────────────────
-  const joinQueue = useCallback(async () => {
+  const joinQueue = useCallback(async (mode: "normal" | "bet" = "normal", betAmount = 0) => {
     setError(null);
     setMmStatus("queued");
     try {
       const res = await fetch(`${API}/matchmaking/join`, {
         method: "POST",
-        headers: authHeader,
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, betAmount }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       if (data.status === "active_duel") {
         setDuelId(data.duelId);
         setMmStatus("matched");
-        return;
+        return true;
       }
       // Start polling matchmaking status
       startMmPolling();
+      return true;
     } catch (err: any) {
       setError(err.message);
       setMmStatus("error");
+      return false;
     }
   }, [token]);
 

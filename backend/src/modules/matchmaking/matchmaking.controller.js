@@ -1,12 +1,10 @@
-const {
-  joinQueue,
-  leaveQueue,
-  getQueueStatus,
-} = require("./matchmaking.service");
+const { joinQueue, leaveQueue, getQueueStatus } = require("./matchmaking.service");
 
 async function join(req, res) {
   try {
-    const result = await joinQueue(req.userId);
+    const mode = req.body?.mode ?? "normal";
+    const betAmount = parseInt(req.body?.betAmount ?? "0", 10);
+    const result = await joinQueue(req.userId, mode, betAmount);
     res.json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });

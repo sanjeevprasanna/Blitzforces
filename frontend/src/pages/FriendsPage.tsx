@@ -245,7 +245,6 @@ export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
-  const [sentIds, setSentIds] = useState<Set<number>>(new Set());
   const [searchLoading, setSearchLoading] = useState(false);
 
   const authHeader = { Authorization: `Bearer ${token}` };
@@ -302,16 +301,16 @@ export default function FriendsPage() {
         headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({ targetUserId: targetId }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        if (data.status === "accepted") {
-          await loadFriends();
-          setTab("friends");
-        } else {
-          // Mark as sent so button shows "Request sent"
-          setSentIds((prev) => new Set(prev).add(targetId));
-        }
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message ?? "Failed to add friend");
       }
+      // Instant mutual friendship — optimistically add to friends list so
+      // button changes to "Already friends" without waiting for server reload
+      const added = searchResults.find((u) => u.id === targetId);
+      if (added) setFriends((prev) => [...prev, added]);
+      // Refresh from server in background to confirm
+      loadFriends();
     } catch (err) {
       console.error("Failed to add friend:", err);
     }
@@ -371,7 +370,6 @@ export default function FriendsPage() {
 
   function getSearchStatus(userId: number): "none" | "friend" | "pending" {
     if (friendIds.has(userId)) return "friend";
-    if (sentIds.has(userId)) return "pending";
     return "none";
   }
 
